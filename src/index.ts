@@ -437,6 +437,13 @@ export class Router<TEnv = any> {
 					} catch {
 						req.body = {}
 					}
+				} else if (req.headers.has('Content-Encoding') && req.headers.get('Content-Encoding').includes('gzip') ) {
+					try {
+						req.body = await request.blob()
+					}
+					catch {
+						req.body = '';
+					}
 				} else {
 					try {
 						req.body = await request.text()

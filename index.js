@@ -229,6 +229,17 @@ class Router {
             return true;
         }) || this.routes.find(r => r.url === '*' && [request.method, '*'].includes(r.method));
     }
+    is_gzip_content(request) {
+        const encoding = request.headers.get('content-encoding')?.split(';', 1)[0].trim() ?? '';
+        return 'gzip'.includes(encoding);
+    }
+    is_content_type(request, ...types) {
+        const type = request.headers.get('content-type')?.split(';', 1)[0].trim() ?? '';
+        return types.includes(type);
+    }
+    // private is_form_content_type(request: Request): boolean {
+    // 	return this.is_content_type(request, 'application/x-www-form-urlencoded', 'multipart/form-data')
+    // }
     /**
     * Handle requests
     *
@@ -270,29 +281,18 @@ class Router {
             if (!route)
                 return new Response(this.debugMode ? 'Route not found!' : null, { status: 404 });
             if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-                if (req.headers.has('Content-Type') && req.headers.get('Content-Type').includes('json')) {
+                req.bodyRaw = await request.blob();
+                req.body = await req.bodyRaw.text();
+                if (this.is_content_type(request, 'application/json')) {
                     try {
-                        req.body = await request.json();
+                        req.body = JSON.parse(req.body);
                     }
                     catch {
                         req.body = {};
                     }
                 }
-                else if (req.headers.has('Content-Encoding') && req.headers.get('Content-Encoding').includes('gzip')) {
-                    try {
-                        req.body = await request.blob();
-                    }
-                    catch {
-                        req.body = '';
-                    }
-                }
-                else {
-                    try {
-                        req.body = await request.text();
-                    }
-                    catch {
-                        req.body = '';
-                    }
+                if (this.is_gzip_content(request)) {
+                    req.body = req.bodyRaw;
                 }
             }
             const res = { headers };

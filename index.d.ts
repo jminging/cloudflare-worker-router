@@ -46,6 +46,7 @@ export interface RouterRequest {
     query: RouterRequestQuery;
     headers: Headers;
     body: string | any;
+    bodyRaw: Blob | any;
     cf?: IncomingRequestCfProperties;
     [key: string]: any;
 }
@@ -278,6 +279,8 @@ export declare class Router<TEnv = any> {
     * @returns {Route | undefined}
     */
     private getRoute;
+    private is_gzip_content;
+    private is_content_type;
     /**
     * Handle requests
     *
